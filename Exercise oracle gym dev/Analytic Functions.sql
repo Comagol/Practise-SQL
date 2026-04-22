@@ -126,3 +126,58 @@ SELECT b.*,
     ) running_group_weight
 FROM bricks b
 ORDER BY weight, brick_id;
+
+
+
+SELECT b.*,
+    SUM (weight) OVER (
+        ORDER BY weight
+        ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING
+    ) sliding_row_window,
+    SUM (weight) OVER (
+        ORDER BY weight
+        RANGE BETWEEN 1 PRECEDING AND 1 FOLLOWING
+    ) sliding_value_window,
+    SUM (weight) OVER (
+        ORDER BY weight
+        GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING
+    ) sliding_group_window
+FROM bricks b
+ORDER BY weight;
+
+
+SELECT b.*,
+    COUNT (*) OVER (
+        ORDER BY weight
+        RANGE BETWEEN 2 PRECEDING AND 1 PRECEDING
+    )count_weight_2_lower_than_current,
+    COUNT (*) OVER (
+        ORDER BY weight
+        RANGE BETWEEN 1 FOLLOWING AND 2 FOLLOWING
+    ) count_weight_2_greater_than_current
+FROM bricks b
+ORDER BY weight;
+
+--exercise but not quite sure abaout these knoledge (look up for more info)
+--The minimum colour of the two rows before (but not including) the current row
+--The count of rows with the same weight as the current and one value following
+
+
+select b.*,
+       min ( colour ) over (
+         order by brick_id
+         rows BETWEEN 2 PRECEDING AND 1 PRECEDING
+       ) first_colour_two_prev,
+       count (*) over (
+         order by weight
+         range BETWEEN CURRENT ROW AND 1 FOLLOWING
+       ) count_values_this_and_next
+from   bricks b
+order  by weight;
+
+
+--FILTERING ANALYTIC FUNCTIONS
+
+SELECT colour FROM bricks
+GROUP BY colour
+HAVING COUNT(*) >=2;
