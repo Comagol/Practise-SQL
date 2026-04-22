@@ -72,3 +72,57 @@ select b.brick_id, b.weight,
 from   bricks b
 order  by brick_id;
 
+--Partition By + Order By
+SELECT b.*,
+    COUNT (*) OVER (
+        PARTITION BY colour
+        ORDER BY brick_id
+    ) running_total,
+    SUM (weight) OVER (
+        PARTITION BY colour
+        ORDER BY brick_id
+    ) running_weight
+FROM bricks b;
+
+--Windowing Clause
+--these is not what we want (need to know why?)
+SELECT b.*,
+    COUNT (*) OVER (
+        ORDER BY weight
+    ) running_total,
+    SUM ( weight ) OVER (
+        ORDER BY weight
+    ) running_weight
+FROM bricks b;
+
+
+--using windowing clause
+SELECT B.*,
+    COUNT (*) OVER (
+        ORDER BY weight
+        ROWS BETWEEN unbounded preceding and current ROW
+    ) running_total,
+    SUM ( weight ) OVER (
+        ORDER BY weight
+        ROWS BETWEEN unbounded preceding and current ROW
+    ) running_weight
+FROM bricks b
+ORDER BY weight;
+
+
+--Sliding Windows
+SELECT b.*,
+    SUM ( weight ) OVER (
+        ORDER BY weight 
+        ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+    ) running_row_weight,
+    SUM ( weight ) OVER (
+        ORDER BY weight
+        ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+    ) running_value_weight,
+    SUM ( weight ) OVER (
+        ORDER BY weight
+        GROUPS BETWEEN 1 PRECEDING AND CURRENT ROW
+    ) running_group_weight
+FROM bricks b
+ORDER BY weight, brick_id;
