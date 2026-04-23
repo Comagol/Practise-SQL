@@ -174,3 +174,88 @@ select colour from my_brick_collection
 INTERSECT
 select colour from your_brick_collection
 order  by colour;
+
+--Finding THE DIFERENCE BETWEEN TWO TABLES
+-- SIMETRIC DIFERENCE = comparing two tables returning a list of all the values that only exist in one table
+-- there is no native operator but i can do it by
+
+--Finding the rows in table one not in table two with minus
+--Finding the rows in table two not in table one with minus
+--Combining the output of these two operations with union (all)
+
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION
+MINUS
+SELECT colour, shape FROM MY_BRICK_COLLECTION
+UNION ALL 
+SELECT colour, shape FROM MY_BRICK_COLLECTION
+MINUS
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION;
+
+--SO TO FIX THESE I HAVE TO USE ()
+
+SELECT * FROM (
+    SELECT colour, shape FROM YOUR_BRICK_COLLECTION
+    MINUS
+    SELECT colour, shape FROM MY_BRICK_COLLECTION
+    ) UNION ALL ( 
+    SELECT colour, shape FROM MY_BRICK_COLLECTION
+    MINUS
+    SELECT colour, shape FROM YOUR_BRICK_COLLECTION
+);
+
+-- OR DO IT THESE OTHER WAY BUT ALSO WITH ()
+
+select * from (
+  select colour, shape from your_brick_collection
+  union all
+  select colour, shape from my_brick_collection
+) minus (
+  select colour, shape from my_brick_collection
+  intersect
+  select colour, shape from your_brick_collection
+);
+
+--Symmetric difference with Group By
+
+
+insert into your_brick_collection values ( 4, 4, 4, 'red', 'cube' );
+
+select * from (
+  select colour, shape from your_brick_collection
+  minus
+  select colour, shape from my_brick_collection
+) union all (
+  select colour, shape from my_brick_collection
+  minus
+  select colour, shape from your_brick_collection
+);
+
+
+
+select colour, shape, sum ( your_bricks ), sum ( my_bricks )
+from (
+  select colour, shape, 1 your_bricks, 0 my_bricks
+  from   your_brick_collection
+  union all
+  select colour, shape, 0 your_bricks, 1 my_bricks
+  from   my_brick_collection
+)
+group  by colour, shape
+having sum ( your_bricks ) <> sum ( my_bricks );
+
+
+select colour, shape,
+       case
+         when sum ( your_bricks ) < sum ( my_bricks ) then 'ME'
+         when sum ( your_bricks ) > sum ( my_bricks ) then 'YOU'
+         else 'EQUAL'
+       end who_has_extra,
+       abs ( sum ( your_bricks ) - sum ( my_bricks ) ) how_many
+from (
+  select colour, shape, 1 your_bricks, 0 my_bricks
+  from   your_brick_collection
+  union all
+  select colour, shape, 0 your_bricks, 1 my_bricks
+  from   my_brick_collection
+)
+group  by colour, shape;
