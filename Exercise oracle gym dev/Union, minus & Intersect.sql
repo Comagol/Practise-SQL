@@ -47,6 +47,37 @@ SELECT colour, shape FROM my_brick_collection
 UNION
 SELECT colour, shape FROM your_brick_collection;
 
+-- DISTINCT
+-- UNION APPLIIES THE DISTINCT OPERATOR TO THE RESULTS. THIS DISCARDS DUPLICATED ROWS
+-- DISTINCT GOES RIGTH AFTER THE SELECT CLAUSE
+
+select distinct * from my_brick_collection;
+
+--also works for specific columns
+SELECT DISTINCT shape FROM my_brick_collection;
+
+-- UNION ALL
+
+--TO SEE ALL THE ROWS OF AN UNION (INCLUDING DUPLICATED VALUES) NOT THE LIST OF DISTINCTS
+
+SELECT colour, shape FROM my_brick_collection
+UNION ALL 
+SELECT colour, shape FROM your_brick_collection;
+
+-- A standar union is the same as these
+SELECT DISTINCT * FROM (
+    SELECT colour, shape FROM my_brick_collection
+    UNION ALL
+    SELECT colour, shape FROM your_brick_collection
+);
+
+-- EXERCISE 1
+-- Complete this query to return a list of all the colours in the two tables. Each colour must only appear once:
+
+select colour from my_brick_collection
+UNION
+select colour from your_brick_collection
+order by colour;
 
 
 
