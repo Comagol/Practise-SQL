@@ -79,6 +79,39 @@ UNION
 select colour from your_brick_collection
 order by colour;
 
+-- EXERCISE 1.1
+--Complete the following query to return a list of all the shapes in both tables. There must show one row for each row in the source tables:
+
+select shape from my_brick_collection
+UNION ALL
+select shape from your_brick_collection
+order  by shape;
+
+-- SET DIFERENCE
+-- THESE OPERATOR RETURNS ALL THE ROWS THAT ARE IN A TABLE THAT ARE NOT IN THE OTHER TABLE
+
+SELECT colour, shape FROM your_brick_collection ybc
+WHERE NOT EXISTS (
+    SELECT NULL FROM my_brick_collection mbc
+    WHERE ybc.colour = mbc.colour
+    AND ybc.shape = mbc.shape
+);
+
+
+--when the query is bigger these is tricky to undestand
+-- but the real issue is to handle the null values
+-- to fix these the test is that the column are equals or both are null
+
+select colour, shape from your_brick_collection ybc
+where  not exists (
+  select null from my_brick_collection mbc
+  where  ( ybc.colour = mbc.colour or
+    ( ybc.colour is null and mbc.colour is null )
+  )
+  and    ( ybc.shape = mbc.shape or
+    ( ybc.shape is null and mbc.shape is null )
+  )
+);
 
 
 
