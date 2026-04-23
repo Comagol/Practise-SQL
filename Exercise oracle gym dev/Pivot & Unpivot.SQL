@@ -184,9 +184,43 @@ pivot (
 where mon >0
 order by location
 
+--PIVOTING MANY VALUES
 
+WITH rws AS (
+    SELECT location, TO_CHAR ( match_date, 'MON' ) match_month ,
+    home_team_points, away_team_points
+    FROM match_results
+)
+SELECT * FROM RWS 
+PIVOT (
+    COUNT (*) matches,
+    sum ( home_team_points) home_points,
+    sum ( away_team_points ) away_points 
+    FOR match_month in (
+        'JAN' JAN, 'FEB' FEB, 'MAR' MAR
+    )
+);
 
+--EXERCISE
+--Complete the following query to show for each location:
 
+--A column counting the number of games played
+--The total number of points scored at each location ( home_team_points + away_team_points )
+--The count columns should have the matches suffix. The total points scored the suffix points
+
+with rws as (
+  select location, home_team_points, away_team_points
+  from   match_results
+)
+select * from rws
+pivot (
+  COUNT(*) matches,
+  sum(home_team_points + away_team_points)
+   for location in (
+    'Snowley' snowley, 'Coldgate' coldgate, 
+    'Dorwall' dorwall, 'Newdell' newdell
+  )
+)
 
 
 
