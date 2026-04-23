@@ -52,9 +52,9 @@ JOIN employees e
 ON e.manager_id = oc.employee_id;
 
 --when using recursive with you must provide aliases for al the columns in the returns
-with org_chart (
+/*with org_chart (
   employee_id, first_name, last_name, manager_id
-) as ( ...);
+) as ( ...);*/
 
 with org_chart (
   employee_id, first_name, last_name, manager_id
@@ -85,6 +85,36 @@ with org_chart (
   on     e.employee_id = oc.manager_id
 )
   select * from org_chart;
+
+-- LEVEL
+-- with te query so far is dificult to know how senior someone is in the company.
+-- these returns the current depth in the tree, starting with the roots at 1.
+-- each new set of children increases by 1.
+
+-- CONNECT BY
+-- With connect by you can use the pseudo column level. these return the current depth on the tree. starting with 1 for the roots.
+-- Each new set of childrens
+
+
+SELECT LEVEL, employee_id, first_name, last_name, manager_id
+FROM EMPLOYEES
+START WITH manager_id IS NULL
+CONNECT BY PRIOR employee_id = manager_id;
+
+-- This helps but it is still tricky to tell the seniority.
+-- Indenting the level with lpad help more
+-- lpad ( str1, N, str2 )
+-- It adds the characters in str2 before those in str1 until the string is N characters long.ALTER
+
+select level, employee_id,
+       lpad ( ' ', level, ' ' ) || first_name || ' ' || last_name name, manager_id
+from   employees
+start  with manager_id is null
+connect by prior employee_id = manager_id;
+
+
+-- Recursive With
+
 
 
 
