@@ -146,7 +146,31 @@ SELECT colour, shape FROM MY_BRICK_COLLECTION
 EXCEPT ALL
 SELECT colour, shape FROM YOUR_BRICK_COLLECTION;
 
+--FINDING COMMUN VALUES
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION ybc
+WHERE EXISTS (
+    SELECT NULL FROM MY_BRICK_COLLECTION mbc 
+    WHERE ( ybc.colour = mbc.colour OR (ybc.colour IS NULL AND mbc.colour IS NULL ) )
+    AND ybc.shape = mbc.SHAPE
+);
 
+-- INTERSECT
 
+--these operator find common values
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION
+INTERSECT
+SELECT colour, shape FROM MY_BRICK_COLLECTION;
 
+-- EXERCISE
+-- COMPLETE THE FOLLOWING QUERY TO RETURN A LIST OF ALL THE SHAPES IN MY COLLECTION NOT IN YOURS
 
+select shape from my_brick_collection
+MINUS 
+select shape from your_brick_collection;
+
+--Complete the following query to return a list of all the colours that are in both tables:
+
+select colour from my_brick_collection
+INTERSECT
+select colour from your_brick_collection
+order  by colour;
