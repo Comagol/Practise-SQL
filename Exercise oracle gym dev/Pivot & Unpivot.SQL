@@ -222,5 +222,52 @@ pivot (
   )
 )
 
+--dynamic pivoting
+with rws as (
+  select location
+  from   match_results
+)
+select xmlserialize ( -- formats an XML document
+         document location_xml as clob indent size=2
+       ) location_xml
+from   rws
+pivot xml (
+  count (*) matches for location in ( any )
+);
+
+--unpivoting
+select match_date, location, 'HOME' home_or_away, home_team_name team
+from   match_results
+union  all
+select match_date, location, 'AWAY' home_or_away, away_team_name team
+from   match_results
+order  by match_date, location, home_or_away;
+
+
+--unpivoting clause
+select match_date, location, home_or_away, team 
+from   match_results
+unpivot (
+  team for home_or_away in ( 
+    home_team_name as 'HOME', away_team_name as 'AWAY'
+  )
+)
+order  by match_date, location, home_or_away;
+
+--exercise
+--Complete the following query to unpivot the home and away points for each match:
+
+select match_date, location, home_or_away, points
+from   match_results
+unpivot (
+  points for 
+  home_or_away in (
+    home_team_points as 'HOME', away_team_points as 'AWAY'
+  )
+)
+order  by match_date, location, home_or_away;
+
+
+
 
 
