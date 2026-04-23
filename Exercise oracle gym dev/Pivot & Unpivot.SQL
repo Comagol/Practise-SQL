@@ -107,8 +107,30 @@ pivot (
 );
 
 --FILTERING PIVOTED ROWS
+WITH rws AS (
+    SELECT location, TO_CHAR ( match_date,  'MON' ) match_month
+    FROM match_results
+)
+SELECT * FROM RWS
+PIVOT ( 
+    COUNT (*) FOR match_month IN (
+        'JAN', 'FEB', 'MAR'
+    )    
+);
 
 
+--adding a where clause
+WITH rws AS (
+    SELECT location, TO_CHAR ( match_date,  'MON' ) match_month
+    FROM match_results
+)
+SELECT * FROM RWS
+PIVOT ( 
+    COUNT (*) FOR match_month IN (
+        'JAN', 'FEB', 'MAR'
+    )    
+)
+WHERE "'JAN'" > 0
 
 
 
