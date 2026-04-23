@@ -161,6 +161,28 @@ PIVOT (
 )
 WHERE JAN > 0
 
+--EXERCISE
+--Complete the following query to show:
+
+--For each location, the number of games played on each day of the week
+--The three letter abbreviation of each day as columns
+--The column headings without quotes
+--Those locations that had one or more games played on Monday
+
+with rws as ( 
+  select location,
+        to_char ( match_date, 'DY' ) match_day
+  from match_results
+)
+select * from rws
+pivot (
+  count (*) for match_day in (
+    'MON' MON, 'TUE' TUE, 'WED' WED, 'THU' THU,
+    'FRI' FRI, 'SAT' SAT, 'SUN' SUN
+      )
+)
+where mon >0
+order by location
 
 
 
