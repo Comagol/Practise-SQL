@@ -132,5 +132,39 @@ PIVOT (
 )
 WHERE "'JAN'" > 0
 
+--NEW COLUMN NAMES
+-- BY DEFAULT THE NAMES OF THE COLUMNS ARE TE VALUES DRON THE UN LIST, WRAPPED IN QUOTES
+--THE NEW NAME GOES AFTER THE 'JUN' JUN_NEW_NAME
+
+WITH rws AS (
+    SELECT location, TO_CHAR ( match_date,  'MON' ) match_month
+    FROM match_results
+)
+SELECT * FROM RWS
+PIVOT ( 
+    COUNT (*) FOR match_month IN (
+        'JAN' JAN, 'FEB' FEBE, 'MAR' MARCH
+    )    
+);
+
+
+--adding a where clause
+WITH rws AS (
+    SELECT location, TO_CHAR ( match_date,  'MON' ) match_month
+    FROM match_results
+)
+SELECT * FROM RWS
+PIVOT ( 
+    COUNT (*) FOR match_month IN (
+        'JAN' JAN, 'FEB' FEB, 'MAR' MAR
+    )    
+)
+WHERE JAN > 0
+
+
+
+
+
+
 
 
