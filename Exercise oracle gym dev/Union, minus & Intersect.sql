@@ -114,5 +114,39 @@ where  not exists (
 );
 
 
+-- MINUS
+--OPERATOR THAT IMPLEMENTS SET DIFERENCE 
+-- THE NULL VALUES ARE CONSIDERED EQUALS.
+
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION
+MINUS
+SELECT colour, shape FROM MY_BRICK_COLLECTION;
+
+--LIKE UNION, MINUS APPLIES A DISTINCT TO THE OUTPUT
+
+select colour, shape from my_brick_collection
+minus
+select colour, shape from your_brick_collection;
+
+-- BUT IF WE ADD ALL TO MINUS 
+SELECT colour, shape FROM MY_BRICK_COLLECTION
+MINUS ALL
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION;
+
+--YOU CAN USE NOT EXISTS TO FIND ALL ROWS IN ONE TABLE NOT IN THE OTHER
+SELECT colour, shape FROM MY_BRICK_COLLECTION mbc
+WHERE NOT EXISTS (
+    SELECT NULL FROM YOUR_BRICK_COLLECTION ybc 
+    WHERE ( ybc.colour = mbc.colour OR (ybc.colour IS NULL AND mbc.colour IS NULL))
+    AND    ybc.shape = mbc.shape
+);
+
+--NEW EXCEPT METHOD
+SELECT colour, shape FROM MY_BRICK_COLLECTION
+EXCEPT ALL
+SELECT colour, shape FROM YOUR_BRICK_COLLECTION;
+
+
+
 
 
