@@ -283,7 +283,68 @@ with org_chart (
 ) cycle job_id set is_repeat to 'Y' default 'N'
   select * from org_chart;
 
+--DISPLAY TREE DETAILS CONECT BY
+-- using level makes it posible to see how deep the current row is in the tree. but it can still be tricky to see how the rows relete to each other.
+-- connect by has many options to help with this
+
+--Connect_by_root
+-- return the value of a column from the root now
+
+--Sys_connect_by_path
+-- It can be useful to see values from al the rows between the root and the current row. allows you to do this. it builds up a string,
+-- adding the value from the first argument for the current row to the end of the list
+
+--Connect_by_isleaf
+-- you can identify the leaf rows using connect_by_isleaf. this returns 1 if the current row is a leaf. Otherwise it return 0.
+
+select employee_id, first_name, last_name, manager_id,
+       connect_by_root last_name,
+       sys_connect_by_path ( last_name, ', ') chart,
+       connect_by_isleaf is_leaf
+from   employees
+start with manager_id is null
+connect by prior employee_id = manager_id;
+
+--DISPLAYING TREE DETAIL: RECURSIVE WITH
+
+--Values from the root (Connect_by_root)
+-- to return a value from the parent row, select it in the base query. And in the recursive part, return this column from the with clause name.
+
+--SHOWING THE PATH FROM ROOT TO CURRENT ROW (SYS_CONNECT_BY_PATH)
+-- Again, start by selecting the value you want in the base query. in the recursive part, append the values you want to add with an appropiate separator.
+
+--IDENTIFING THE LEAVES (CONNECT_BY_ISLEAF)
+
+/*
+displaying leaf rows is more complex with recursive with. to find these, add the depth (level) to the tree. 
+Then sort it using depth-first search
+
+Depth first goes as far down as posible. After hitting a leaf, it goes back up to the next unvisited child. 
+
+case 
+  when lead ( lvl, 1, 1 ) over ( order by seq ) <= lvl then 'LEAF'
+end is_leaf
+*/
 
 
 
 
+with org_chart (
+  employee_id, first_name, last_name, manager_id, root_emp, chart, lvl
+) as (
+  select employee_id, first_name, last_name, manager_id, 
+         last_name root_emp, last_name chart, 1 lvl
+  from   employees
+  where  manager_id is null
+  union  all
+  select e.employee_id, e.first_name, e.last_name, e.manager_id, 
+         oc.root_emp, oc.chart || ', ' || e.last_name, oc.lvl+1
+  from   org_chart oc
+  join   employees e
+  on     e.manager_id = oc.employee_id
+) search depth first by employee_id set seq
+  select oc.*, 
+         case 
+           when lead ( lvl, 1, 1 ) over ( order by seq ) <= lvl then 'LEAF'
+         end is_leaf
+  from   org_chart oc;
