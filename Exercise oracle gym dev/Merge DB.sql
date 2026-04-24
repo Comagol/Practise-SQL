@@ -18,6 +18,7 @@ insert into bricks_for_sale values ( 'red', 'cube', 4.95 );
 insert into bricks_for_sale values ( 'blue', 'cube', 7.75 );
 insert into bricks_for_sale values ( 'blue', 'pyramid', 9.99 );
 
+
 commit;
 
 
@@ -259,5 +260,82 @@ when matched then
     update set pb.colour = bfs.colour, pb.shape = bfs.shape;
 
 
+--UPDATE EACH ROW ONCE
+-- the join shouls map each row in the source to at most one in the target. if there are two or more rows in the source
+-- which map to a row in the target, you'll get an error.ALTER
+
+merge into purchased_bricks pb
+using bricks_for_sale bfs
+on    ( pb.colour = bfs.colour )
+when not matched then
+  insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
+when matched then
+  update set pb.price = bfs.price;
+
+--CONDITIONAL MERGING
+/*
+when merging tables, you may want to preserve values for some of the target'sexisting rows. Or stop users inserting
+certain new values.
+
+you can do both using a where clause in the matched clauses. this like a regular were clause and comes after the insert or update
+
+insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
+  where  bfs.colour = 'blue'
 
 
+the folowwing code updated the price of all the bricks for sale to 100 and adds red pyramid. but the merge includes a 
+filter to only affect blue rows in both clauses. so the price of the red remaINS 4.95 and the red pyramid is not added
+to the purchased_bricks
+*/
+
+update bricks_for_sale
+set    price = 100;
+
+insert into bricks_for_sale values ( 'red', 'pyramid', 5.99);
+
+merge into purchased_bricks pb
+using bricks_for_sale bfs 
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then 
+    insert ( pb.colour, pb.shape, pb.price )
+    values ( bfs.colour, bfs.shape, bfs.price)
+    where bfs.colour = 'blue'
+when matched then 
+    update set pb.price = bfs.price
+    where bfs.colour = 'blue';
+
+select * from purchased_bricks;
+rollback;
+
+
+--EXERCISE
+--Complete the following merge statement, so it removes matched rows from purchased_bricks that have a price less than 9:
+/*
+bad practise
+delete purchased_bricks;
+
+insert into purchased_bricks values ( 'blue', 'pyramid', 9.99 );
+insert into purchased_bricks values ( 'red', 'cube', 100 );
+insert into purchased_bricks values ( 'blue', 'cube', 100 );
+
+
+select * from purchased_bricks;
+select * from bricks_for_sale;
+
+merge into purchased_bricks pb
+using bricks_for_sale bfs
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then
+  insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
+when matched then
+  update set pb.price = bfs.price
+  delete where pb.price < 9;
+
+select * from purchased_bricks;
+
+rollback;
+
+*/
