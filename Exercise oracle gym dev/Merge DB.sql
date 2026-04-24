@@ -243,5 +243,21 @@ order  by colour, shape;
 
 rollback;
 
+--MERGE RESTICTIONS
+--you can only update columns not in the join clause and just update each row once.
+
+--UPDATING JOIN COLUMNS
+--if you try to set columns in the join clause, you will get an error. For example, the following fails.
+--because it tries to update colour and shape that are in the join clause.
+merge into purchased_bricks pb
+using bricks_for_sale bfs
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then
+    insert ( pb.colour, pb.shape, pb.price )
+    values ( bfs.colour, bfs.shape, bfs.price )
+when matched then
+    update set pb.colour = bfs.colour, pb.shape = bfs.shape;
+
+
 
 
