@@ -102,7 +102,7 @@ You can spend a lot of effort figuring this out. Luckily there's a better way: M
 -- The source has to be a table. But a query returns a table. So you can select the values you want to upsert. so you can merge a blue cube costing 15.95
 
 select 'blue' colour, 'cube' shape, 15.95 price 
-  from   dual
+  from   dual;
 
 -- you need to link these values to rows in the target. Each source row should each link to at most one row in the target table.
 -- the orimary key of purchased_bricks is colour and shape. so you can garantee by joining using these columns.
@@ -121,13 +121,127 @@ when matched then
 /*
 for each row in the source that doesn't match one in the target, the when not matched clause fires. here you state the values you'd 
 like to insert into the target for which columns. if the source and target tables have the same column names, you must alias the columns in the value clause
+
+when not matched then
+  insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
 */
 
+merge into purchased_bricks pb
+using ( 
+  select 'blue' colour, 'cube' shape, 15.95 price 
+  from   dual 
+) bfs
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then
+  insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
+when matched then
+  update set pb.price = bfs.price;
+
+select * from purchased_bricks;
+
+--MERGING TWO TABLES
+--you may also want to upsert two whole tables, so all the rows in the cource have a matching row un the target
+-- you can do this by writing an update-if-wxists. followed by an insert-not-exists (or vice versa) like
+
+update purchased_bricks pb
+set    pb.price = (
+  select bfs.price
+  from   bricks_for_sale bfs
+  where  pb.colour = bfs.colour 
+  and    pb.shape = bfs.shape
+)
+where  exists (
+  select null
+  from   bricks_for_sale bfs
+  where  pb.colour = bfs.colour 
+  and    pb.shape = bfs.shape
+);
+
+insert into purchased_bricks (colour, shape, price)
+  select bfs.colour, bfs.shape, bfs.price
+  from   bricks_for_sale bfs
+  where  not exists (
+    select null
+    from   purchased_bricks pb
+    where  pb.colour = bfs.colour
+    and    pb.shape = bfs.shape
+  );
+
+select * from purchased_bricks;
+
+rollback;
+
+/*
+But, as with upserting a single row, this a lot of typing and hard to follow. You can simplify the above into the following merge:
+*/
+
+merge into purchased_bricks pb
+using bricks_for_sale bfs
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then 
+    insert ( pb.colour, pb.shape, pb.price )
+    values ( bfs.colour, bfs.shape, bfs.price )
+when matched then 
+    update set pb.price = bfs.price;
+
+select * from purchased_bricks;
+
+commit;
+
+/*
+These allows you to keep target rows in sync with those in the source. but this only affects rows with a match in the source.
+
+For example, if you:
+
+Set the price of all bricks_for_sale to 0.99
+Add a red pyramid to bricks_for_sale
+Add a green cube to purchased_bricks
+
+Merge adds the red pyramid. But it will only change the price of the red cube and blue bricks. The green cube has no matching row in bricks_for_sale. So its price stays the same
+*/
+update bricks_for_sale
+set    price = 0.99;
+
+insert into bricks_for_sale values ( 'red', 'pyramid', 5.99 );
+insert into purchased_bricks values ( 'green', 'cube', 9.95 );
+
+merge into purchased_bricks pb
+using bricks_for_sale bfs
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then
+  insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
+when matched then
+  update set pb.price = bfs.price;
+
+select * from purchased_bricks;
+
+rollback;
 
 
+--EXERCISE
+--complete the following merge. It should add the yellow cube to purchased_bricks. 
+-- And update the price of the red brick to 5.55:
 
+merge into purchased_bricks pb
+using ( 
+  select 'yellow' colour, 'cube' shape, 9.99 price from dual 
+  union all
+  select 'red' colour, 'cube' shape, 5.55 price from dual 
+) bfs
+on    ( pb.colour = bfs.colour and pb.shape = bfs.shape )
+when not matched then
+  insert ( pb.colour, pb.shape, pb.price )
+  values ( bfs.colour, bfs.shape, bfs.price )
+when matched then
+  update set pb.price = bfs.price;
 
+select * from purchased_bricks pb
+order  by colour, shape;
 
+rollback;
 
 
 
