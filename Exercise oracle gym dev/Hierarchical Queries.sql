@@ -205,6 +205,85 @@ start  with manager_id is null
 connect by prior employee_id = manager_id
 order SIBLINGS by first_name;
 
+-- DETECTING LOOPS
+-- it possible to store loops in your hierarchy. usually this is a data error. 
+
+update employees
+set    manager_id = 107
+where  employee_id = 100;
+
+
+-- CONNECT BY
+-- if you try to build a hierarchy that contains a loop, connect by throws an error
+
+select * from employees
+start with employee_id = 100
+connect by prior employee_id = manager_id;
+
+-- you can avoid this using the nocycle keyword. this spots when the query returns to the same row. 
+-- the DB hides the repeated row and continues processing the tree.
+select * from employees
+start  with employee_id = 100
+connect by nocycle prior employee_id = manager_id;
+
+--RECURSIVE WITH
+
+-- You control loop detection using the cycle clause of recursive with. Here you stake which columns mark a loop.
+-- The DB keeps track of the values it sees in these columns. if the current row's values for these appear in one of it's ancestors.
+
+-- cycle <columns> set <loop_column> to <loop_value> default <default_value>
+
+WITH org_chart (
+    employee_id, first_name, last_name, manager_id, department_id
+) AS (
+    SELECT employee_id, first_name, last_name, manager_id, department_id
+    FROM EMPLOYEES
+    WHERE employee_id = 100
+    UNION ALL
+    SELECT e.employee_id, e.first_name, e.last_name, e.manager_id, e.department_id
+    FROM org_chart oc
+    JOIN EMPLOYEES e
+    ON e.manager_id = oc.employee_id
+) cycle employee_id set looped to 'Y' default 'N'
+SELECT * FROM org_chart;
+
+--unlike connect by, this includes the rows you visit twice. So the CEO, Steven king apears twice in the results
+-- Using recursive with you can choose any columns in your query to mark a "loop". this allows to stop processing before you get back to the same row
+
+
+with org_chart (
+  employee_id, first_name, last_name, manager_id, department_id
+) as (
+  select employee_id, first_name, last_name, manager_id, department_id
+  from   employees
+  where  employee_id = 100
+  union  all
+  select e.employee_id, e.first_name, e.last_name, e.manager_id, e.department_id
+  from   org_chart oc
+  join   employees e
+  on     e.manager_id = oc.employee_id
+) cycle department_id set looped to 'Y' default 'N'
+  select * from org_chart;
+
+-- EXERCISE
+-- Complete the following query to cycle on job_id. Define a cycle column is_repeat which defaults to N. 
+-- When accessing the same job_id, set it to Y
+
+with org_chart (
+  employee_id, first_name, last_name, manager_id, job_id
+) as (
+  select employee_id, first_name, last_name, manager_id , job_id
+  from   employees
+  where  employee_id = 102
+  union  all
+  select e.employee_id, e.first_name, e.last_name, e.manager_id, e.job_id
+  from   org_chart oc
+  join   employees e
+  on     e.manager_id = oc.employee_id
+) cycle job_id set is_repeat to 'Y' default 'N'
+  select * from org_chart;
+
+
 
 
 
