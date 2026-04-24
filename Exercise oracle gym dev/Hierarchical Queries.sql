@@ -114,9 +114,96 @@ connect by prior employee_id = manager_id;
 
 
 -- Recursive With
+-- recursive has no equivalent of level so you need to build your own.
+with org_chart (
+  employee_id, first_name, last_name, manager_id, lvl
+) as (
+  select employee_id, first_name, last_name, manager_id, 1 lvl
+  from   employees
+  where  manager_id is null
+  union  all
+  select e.employee_id, e.first_name, e.last_name, e.manager_id, oc.lvl + 1
+  from   org_chart oc
+  join   employees e
+  on     e.manager_id = oc.employee_id
+)
+select * from org_chart;
+
+--sorting output: connect By
+--when you build a hirerquical query , the DB returns the rows in an order matching the tree structure
+-- Connect by returns rows in a deoth-first search order. if you use a regular order by you will lose these sort
+-- but you can preserve the depth-first tree and sort rows with the same parent. you do this with the sibiling clause of order by.
+
+select level, employee_id, first_name, last_name, hire_date, manager_id 
+from   employees
+start  with manager_id is null
+connect by prior employee_id = manager_id
+order siblings by hire_date;
+
+
+--SORTING OUTPUT: RECURSIVE WITH
+-- allows you to choose whether you want to tranverse the tree using depth-first or bradth-first search. 
+
+--DEPTH-FIRST-SEARCH
+-- these start at the root. then picksone of the children. it then gets the child's child. And so on, down the tree accessing child nodes first
+--when it hits a leaf it goes back up the tree until it finds an unvisited child.
+-- so it goes as far down the tree can before accessing anather row at the same level.
+
+-- to use these depth-first-search you have to specify it in the seach clause.
+-- the columns you sort by defines which order the DB returns sibilings. and the set clasue define a new column sorting
+-- this sequence. it starts with 1 and increments for each new row by 1
+
+with org_chart (
+  employee_id, first_name, last_name, hire_date, manager_id, lvl
+) as (
+  select employee_id, first_name, last_name, hire_date, manager_id, 1 lvl
+  from   employees
+  where  manager_id is null
+  union  all
+  select e.employee_id, e.first_name, e.last_name, e.hire_date, e.manager_id, oc.lvl + 1
+  from   org_chart oc
+  join   employees e
+  on     e.manager_id = oc.employee_id
+) search depth first by hire_date set hire_seq
+  select * from org_chart
+  order  by hire_seq;
+
+--BREADTH-FIRST SEARCH
+--intead of traveling down the tre this search goes acroos it.
+-- Again this starts with the root. but it accesses all the rows at the same level before going down to any children.
+-- the sorting column define wich order you access nodes at the same depth.
+-- So the following returns all the employees at the same rank next to each other.
+
+with org_chart (
+  employee_id, first_name, last_name, hire_date, manager_id, lvl
+) as (
+  select employee_id, first_name, last_name, hire_date, manager_id, 1 lvl
+  from   employees
+  where  manager_id is null
+  union  all
+  select e.employee_id, e.first_name, e.last_name, e.hire_date, e.manager_id, oc.lvl + 1
+  from   org_chart oc
+  join   employees e
+  on     e.manager_id = oc.employee_id
+) search breadth first by hire_date set hire_seq
+  select * from org_chart
+  order  by hire_seq;
 
 
 
+
+--EXERCISE
+/*
+Complete the following query to return employees in depth-first order. 
+You should sort employees with the same manager by first_name:
+*/
+
+
+select level, employee_id, first_name, last_name, hire_date, manager_id
+from   employees
+start  with manager_id is null
+connect by prior employee_id = manager_id
+order SIBLINGS by first_name;
 
 
 
